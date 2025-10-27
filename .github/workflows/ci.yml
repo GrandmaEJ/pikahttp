@@ -2,13 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - 'LICENSE'
   pull_request:
-    branches: [main]
+    branches: [ main ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -28,7 +28,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -37,11 +37,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+          cache: pip
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -51,22 +51,37 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: pikahttp-deps-${{ hashFiles('**/Cargo.lock') }}
+          shared-key: "pikahttp-deps"
 
-      - name: Install Python dependencies
+      - name: Install Python build dependencies
         run: |
-          python -m pip install --upgrade pip wheel setuptools maturin pytest requests
-          pip install -r requirements-dev.txt
+          python -m pip install --upgrade pip wheel setuptools maturin
 
-      - name: Build, install, and test
+      - name: Build and install pikahttp
         run: |
           python -m venv .venv
-          . .venv/bin/activate
+          source .venv/bin/activate
+          pip install --upgrade pip
           maturin build --release
           pip install target/wheels/*.whl
-          python -m pytest -v tests/
+          pip install pytest black ruff  # install dev tools
+
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          pytest -v tests/
+
+      - name: Check Python formatting
+        run: |
+          source .venv/bin/activate
           black --check .
           ruff check .
+
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy
+        run: cargo clippy -- -D warnings
 
       - name: Security audit
         uses: rustsec/audit-check@v1
@@ -77,16 +92,16 @@ jobs:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: 'pip'
+          cache: pip
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -94,13 +109,21 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: pikahttp-deps-${{ hashFiles('**/Cargo.lock') }}
+          shared-key: "pikahttp-deps"
 
-      - name: Build and run benchmark
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip wheel maturin requests
+
+      - name: Build and install pikahttp
         run: |
           python -m venv .venv
-          . .venv/bin/activate
-          python -m pip install --upgrade pip maturin requests
+          source .venv/bin/activate
+          pip install --upgrade pip
           maturin build --release
           pip install target/wheels/*.whl
+
+      - name: Run benchmark
+        run: |
+          source .venv/bin/activate
           python benchmark.py
