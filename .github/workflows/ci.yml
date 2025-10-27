@@ -72,7 +72,10 @@ jobs:
     
     - name: Build and install
       run: |
-        maturin develop
+        python -m venv .venv
+        source .venv/bin/activate
+        maturin build --release
+        pip install target/wheels/*.whl
     
     - name: Run tests
       run: |
@@ -118,7 +121,10 @@ jobs:
     
     - name: Build and install
       run: |
-        maturin develop
+        python -m venv .venv
+        source .venv/bin/activate
+        maturin build --release
+        pip install target/wheels/*.whl
     
     - name: Run benchmark
       run: |
