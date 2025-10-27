@@ -23,21 +23,83 @@ from pikahttp import Session
 # Create a session
 session = Session()
 
-# Make a GET request
+# GET request
 response = session.request(
     "GET", 
-    "https://api.github.com/zen",
+    "https://httpbin.org/get",
     headers={"User-Agent": "pikahttp/0.1.0"}
 )
-
-# Print response
 print(f"Status code: {response['status_code']}")
 print(f"Content: {response['content']}")
+
+# POST request with JSON
+import json
+data = {"hello": "world"}
+response = session.request(
+    "POST",
+    "https://httpbin.org/post",
+    headers={
+        "User-Agent": "pikahttp/0.1.0",
+        "Content-Type": "application/json"
+    },
+    body=json.dumps(data)
+)
+print(f"Status code: {response['status_code']}")
+print(f"Response: {response['content']}")
+```
+
+## Examples
+
+### Basic GET Request
+```python
+from pikahttp import Session
+
+session = Session()
+response = session.request(
+    "GET",
+    "https://httpbin.org/get",
+    headers={"User-Agent": "pikahttp/0.1.0"}
+)
+```
+
+### POST with JSON Data
+```python
+import json
+from pikahttp import Session
+
+session = Session()
+data = {"hello": "world"}
+response = session.request(
+    "POST",
+    "https://httpbin.org/post",
+    headers={
+        "User-Agent": "pikahttp/0.1.0",
+        "Content-Type": "application/json"
+    },
+    body=json.dumps(data)
+)
+```
+
+### Custom Headers
+```python
+from pikahttp import Session
+
+session = Session()
+headers = {
+    "User-Agent": "pikahttp/0.1.0",
+    "X-Custom-Header": "custom value",
+    "Accept": "application/json"
+}
+response = session.request(
+    "GET",
+    "https://httpbin.org/headers",
+    headers=headers
+)
 ```
 
 ## Performance
 
-Based on benchmarks making 100 HTTP requests to api.ipify.org:
+Based on benchmarks making 100 HTTP requests:
 
 ```
 Library         Mean (s)     Median (s)   Min (s)      Max (s)      StdDev (s)  
@@ -52,9 +114,17 @@ Key findings:
 - 18.1% faster than requests
 - More consistent performance (lower standard deviation)
 
-## Examples
+## Development
 
-See the `examples/` directory for more usage examples.
+### Running Tests
+```bash
+pytest tests/
+```
+
+### Running Benchmarks
+```bash
+python benchmark.py
+```
 
 ## License
 
