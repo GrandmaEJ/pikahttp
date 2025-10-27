@@ -12,22 +12,22 @@ pub struct PySession {}
 #[pymethods]
 impl PySession {
     #[new]
-    pub fn new() -> PyResult<Self> {
-        Ok(Self {})
+    pub fn new() -> Self {
+        Self {}
     }
 
     #[pyo3(signature = (method, url, headers=None, body=None))]
-    pub fn request<'py>(
+    pub fn request(
         &self,
-        py: Python<'py>,
+        py: Python,
         method: String,
         url: String,
-        headers: Option<Bound<'py, PyDict>>,
+        headers: Option<&PyDict>,
         body: Option<String>,
-    ) -> PyResult<Bound<'py, PyDict>> {
+    ) -> PyResult<Py<PyDict>> {
         let method = method
             .parse::<Method>()
-            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
 
         let headers_map: HashMap<String, String> = match headers {
             Some(h) => h.extract()?,
@@ -46,56 +46,59 @@ impl PySession {
             let body = Full::new(Bytes::from(body_bytes));
             let req = builder
                 .body(body)
-                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+                .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
 
             let client = CLIENT.clone();
             let resp = client
                 .request(req)
                 .await
-                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+                .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
 
             let status = resp.status().as_u16();
             let hdrs = resp.headers().clone();
-            let bytes = resp.into_body().collect().await
-                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?
+            let bytes = resp
+                .into_body()
+                .collect()
+                .await
+                .map_err(|e| PyRuntimeError::new_err(e.to_string()))?
                 .to_bytes();
 
-            Ok::<_, pyo3::PyErr>((status, hdrs, bytes))
+            Ok::<_, PyErr>((status, hdrs, bytes))
         };
 
-        let (status, hdrs, bytes): (u16, _, Bytes) = RUNTIME.block_on(fut)?;
+        let (status, hdrs, bytes) = RUNTIME.block_on(fut)?;
 
-        let out = PyDict::new_bound(py);
+        let out = PyDict::new(py);
         out.set_item("status_code", status)?;
-        out.set_item("content", PyBytes::new_bound(py, &bytes))?;
+        out.set_item("content", PyBytes::new(py, &bytes))?;
 
-        let hdict = PyDict::new_bound(py);
+        let hdict = PyDict::new(py);
         for (k, v) in hdrs.iter() {
             hdict.set_item(k.as_str(), v.to_str().unwrap_or(""))?;
         }
         out.set_item("headers", hdict)?;
 
-        Ok(out)
+        Ok(out.into())
     }
 
     #[pyo3(signature = (url, headers=None))]
-    pub fn get<'py>(
+    pub fn get(
         &self,
-        py: Python<'py>,
+        py: Python,
         url: String,
-        headers: Option<Bound<'py, PyDict>>,
-    ) -> PyResult<Bound<'py, PyDict>> {
+        headers: Option<&PyDict>,
+    ) -> PyResult<Py<PyDict>> {
         self.request(py, "GET".into(), url, headers, None)
     }
 
     #[pyo3(signature = (url, headers=None, body=None))]
-    pub fn post<'py>(
+    pub fn post(
         &self,
-        py: Python<'py>,
+        py: Python,
         url: String,
-        headers: Option<Bound<'py, PyDict>>,
+        headers: Option<&PyDict>,
         body: Option<String>,
-    ) -> PyResult<Bound<'py, PyDict>> {
+    ) -> PyResult<Py<PyDict>> {
         self.request(py, "POST".into(), url, headers, body)
     }
 }
