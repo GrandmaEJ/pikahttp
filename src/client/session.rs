@@ -1,7 +1,7 @@
 use crate::runtime::{CLIENT, RUNTIME};
 use bytes::Bytes;
 use http_body_util::{BodyExt, Full};
-use hyper::{Method, Request, HeaderMap};
+use hyper::{Method, Request};
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyDict};
 use std::collections::HashMap;
