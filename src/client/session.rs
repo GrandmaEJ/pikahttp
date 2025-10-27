@@ -22,9 +22,9 @@ impl PySession {
         py: Python<'py>,
         method: String,
         url: String,
-        headers: Option<Bound<'py, PyDict>>,
+        headers: Option<&PyDict>,
         body: Option<String>,
-    ) -> PyResult<Bound<'py, PyDict>> {
+    ) -> PyResult<&'py PyDict> {
         let method = method
             .parse::<Method>()
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
@@ -65,11 +65,11 @@ impl PySession {
 
         let (status, hdrs, bytes): (u16, _, Bytes) = RUNTIME.block_on(fut)?;
 
-        let out = PyDict::new_bound(py);
+        let out = PyDict::new(py);
         out.set_item("status_code", status)?;
-        out.set_item("content", PyBytes::new_bound(py, &bytes))?;
+        out.set_item("content", PyBytes::new(py, &bytes))?;
 
-        let hdict = PyDict::new_bound(py);
+        let hdict = PyDict::new(py);
         for (k, v) in hdrs.iter() {
             hdict.set_item(k.as_str(), v.to_str().unwrap_or(""))?;
         }
@@ -83,8 +83,8 @@ impl PySession {
         &self,
         py: Python<'py>,
         url: String,
-        headers: Option<Bound<'py, PyDict>>,
-    ) -> PyResult<Bound<'py, PyDict>> {
+        headers: Option<&PyDict>,
+    ) -> PyResult<&'py PyDict> {
         self.request(py, "GET".into(), url, headers, None)
     }
 
@@ -93,9 +93,9 @@ impl PySession {
         &self,
         py: Python<'py>,
         url: String,
-        headers: Option<Bound<'py, PyDict>>,
+        headers: Option<&PyDict>,
         body: Option<String>,
-    ) -> PyResult<Bound<'py, PyDict>> {
+    ) -> PyResult<&'py PyDict> {
         self.request(py, "POST".into(), url, headers, body)
     }
 }
