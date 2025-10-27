@@ -51,18 +51,18 @@ def benchmark_urllib():
 def benchmark_requests():
     requests.get(TEST_URL)
 
-async def benchmark_pikahttp():
-    client = pikahttp.create_client()
-    response = await client.get(TEST_URL)
-    response.content  # Content is already downloaded
+def benchmark_pikahttp():
+    session = pikahttp.Session()
+    response = session.request("GET", TEST_URL, headers={"User-Agent": "pikahttp-benchmark/0.1.0"})
+    response["content"]  # Content is already downloaded
 
-async def run_benchmarks():
+def run_benchmarks():
     # Warm up
     print("Warming up...")
     for _ in range(5):
         benchmark_urllib()
         benchmark_requests()
-        await benchmark_pikahttp()
+        benchmark_pikahttp()
 
     print(f"\nRunning benchmarks ({NUM_REQUESTS} requests each)...")
     
@@ -86,7 +86,7 @@ async def run_benchmarks():
     pikahttp_times: List[float] = []
     print("\nBenchmarking pikahttp...")
     for i in range(NUM_REQUESTS):
-        time_taken = await measure_time_async(benchmark_pikahttp)
+        time_taken = measure_time(benchmark_pikahttp)
         pikahttp_times.append(time_taken)
         print_progress(i + 1, NUM_REQUESTS, "pikahttp")
 
@@ -126,4 +126,4 @@ async def run_benchmarks():
 if __name__ == "__main__":
     print("Starting HTTP Client Benchmarks")
     print("=" * 60)
-    asyncio.run(run_benchmarks())
+    run_benchmarks()

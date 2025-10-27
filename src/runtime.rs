@@ -1,10 +1,12 @@
-use hyper_util::client::legacy::{connect::HttpConnector, Client};
+use http_body_util::Full;
+use bytes::Bytes;
+use hyper_util::client::legacy::{connect::HttpConnector, Builder};
 use hyper_util::rt::TokioExecutor;
 use hyper_tls::HttpsConnector;
 use once_cell::sync::Lazy;
 use std::sync::Arc;
 use tokio::runtime::Runtime;
-use hyper::body::Body;
+use hyper_util::client::legacy::Client as LegacyClient;
 
 /// global tokio runtime
 pub static RUNTIME: Lazy<Runtime> = Lazy::new(|| {
@@ -16,9 +18,9 @@ pub static RUNTIME: Lazy<Runtime> = Lazy::new(|| {
 });
 
 /// shared hyper client
-pub static CLIENT: Lazy<Arc<Client<HttpsConnector<HttpConnector>, Body>>> = Lazy::new(|| {
+pub static CLIENT: Lazy<Arc<LegacyClient<HttpsConnector<HttpConnector>, Full<Bytes>>>> = Lazy::new(|| {
     let https = HttpsConnector::new();
-    Arc::new(Client::builder(TokioExecutor::new())
+    Arc::new(Builder::new(TokioExecutor::new())
         .pool_idle_timeout(None)
-        .build::<_, Body>(https))
+        .build(https))
 });

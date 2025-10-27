@@ -1,6 +1,7 @@
 use crate::runtime::{CLIENT, RUNTIME};
-use hyper::body::{to_bytes, Bytes, Body};
-use hyper::{Method, Request};
+use bytes::Bytes;
+use http_body_util::{BodyExt, Full};
+use hyper::{Method, Request, HeaderMap};
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyDict};
 use std::collections::HashMap;
@@ -42,8 +43,9 @@ impl PySession {
                 builder = builder.header(k, v);
             }
 
+            let body = Full::new(Bytes::from(body_bytes));
             let req = builder
-                .body(Body::from(body_bytes))
+                .body(body)
                 .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
 
             let client = CLIENT.clone();
@@ -54,11 +56,11 @@ impl PySession {
 
             let status = resp.status().as_u16();
             let hdrs = resp.headers().clone();
-            let bytes = to_bytes(resp.into_body())
-                .await
-                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            let bytes = resp.into_body().collect().await
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?
+                .to_bytes();
 
-            Ok((status, hdrs, bytes))
+            Ok::<_, pyo3::PyErr>((status, hdrs, bytes))
         };
 
         let (status, hdrs, bytes): (u16, _, Bytes) = RUNTIME.block_on(fut)?;

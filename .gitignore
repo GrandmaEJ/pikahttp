@@ -8,3 +8,5 @@ __pycache__/
 uv.lock
 /python/pikahttp/_core.cpython*.so
 /python/pikahttp/_core.pyd
+*lock
+*.lock
