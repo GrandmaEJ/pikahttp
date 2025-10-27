@@ -1,7 +1,7 @@
 import json
 import pytest
 from pikahttp import Session
-from .mock_server import MockServer
+from tests.mock_server import MockServer
 
 @pytest.fixture
 def mock_server():
