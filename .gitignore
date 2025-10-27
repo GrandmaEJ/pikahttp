@@ -1,0 +1,10 @@
+/target
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+
+uv.lock
+/python/pikahttp/_core.cpython*.so
+/python/pikahttp/_core.pyd
