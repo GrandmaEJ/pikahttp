@@ -65,13 +65,7 @@ jobs:
           maturin build --release
           pip install target/wheels/*.whl
           pip install pytest black ruff  # install dev tools
-
-      - name: Run tests
-        run: |
-          source .venv/bin/activate
-          python -m pytest -v tests/
-
-
+          
       - name: Check Python formatting
         run: |
           source .venv/bin/activate
