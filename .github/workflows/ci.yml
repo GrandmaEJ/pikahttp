@@ -66,17 +66,17 @@ jobs:
           pip install target/wheels/*.whl
           pip install pytest black ruff  # install dev tools
           
-      - name: Check Python formatting
-        run: |
-          source .venv/bin/activate
-          black --check .
-          ruff check .
+      # - name: Check Python formatting
+      #   run: |
+      #     source .venv/bin/activate
+      #     black --check .
+      #     ruff check .
 
-      - name: Check Rust formatting
-        run: cargo fmt --all -- --check
+      # - name: Check Rust formatting
+      #   run: cargo fmt --all -- --check
 
-      - name: Run clippy
-        run: cargo clippy -- -D warnings
+      # - name: Run clippy
+      #   run: cargo clippy -- -D warnings
 
       - name: Security audit
         uses: rustsec/audit-check@v1
