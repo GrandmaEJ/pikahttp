@@ -12,7 +12,10 @@ import requests
 import pikahttp
 import sys
 
-TEST_URL = "https://api.ipify.org?format=json"
+from tests.mock_server import MockServer
+
+server = MockServer()
+TEST_URL = f"{server.start()}/get"
 NUM_REQUESTS = 100
 
 def print_progress(current: int, total: int, label: str = "") -> None:
@@ -124,6 +127,9 @@ def run_benchmarks():
     print(f"pikahttp is {requests_speedup:.1f}% faster than requests")
 
 if __name__ == "__main__":
-    print("Starting HTTP Client Benchmarks")
-    print("=" * 60)
-    run_benchmarks()
+    try:
+        print("Starting HTTP Client Benchmarks")
+        print("=" * 60)
+        run_benchmarks()
+    finally:
+        server.stop()
