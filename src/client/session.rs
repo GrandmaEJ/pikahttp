@@ -1,3 +1,4 @@
+// No `use pyo3_asyncio` import needed
 use crate::runtime::{CLIENT, RUNTIME};
 use bytes::Bytes;
 use http_body_util::{BodyExt, Full};
@@ -12,22 +13,22 @@ pub struct PySession {}
 #[pymethods]
 impl PySession {
     #[new]
-    pub fn new() -> Self {
-        Self {}
+    pub fn new() -> PyResult<Self> {
+        Ok(Self {})
     }
 
     #[pyo3(signature = (method, url, headers=None, body=None))]
-    pub fn request(
+    pub fn request<'py>(
         &self,
-        py: Python,
+        py: Python<'py>, // We need 'py for creating dicts
         method: String,
         url: String,
-        headers: Option<&PyDict>,
+        headers: Option<Bound<'py, PyDict>>,
         body: Option<String>,
-    ) -> PyResult<Py<PyDict>> {
+    ) -> PyResult<Bound<'py, PyDict>> { // Returns a Bound<PyDict>, not awaitable
         let method = method
             .parse::<Method>()
-            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
 
         let headers_map: HashMap<String, String> = match headers {
             Some(h) => h.extract()?,
@@ -46,59 +47,63 @@ impl PySession {
             let body = Full::new(Bytes::from(body_bytes));
             let req = builder
                 .body(body)
-                .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
 
             let client = CLIENT.clone();
             let resp = client
                 .request(req)
                 .await
-                .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
 
             let status = resp.status().as_u16();
             let hdrs = resp.headers().clone();
-            let bytes = resp
-                .into_body()
-                .collect()
-                .await
-                .map_err(|e| PyRuntimeError::new_err(e.to_string()))?
+            let bytes = resp.into_body().collect().await
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?
                 .to_bytes();
 
-            Ok::<_, PyErr>((status, hdrs, bytes))
+            Ok::<_, pyo3::PyErr>((status, hdrs, bytes))
         };
 
-        let (status, hdrs, bytes) = RUNTIME.block_on(fut)?;
+        // This is the original blocking call, which is fine
+        let (status, hdrs, bytes): (u16, _, Bytes) = RUNTIME.block_on(fut)?;
 
+        // --- FIXES for pyo3 0.27 ---
+        
+        // Use PyDict::new(py) instead of ::new_bound()
         let out = PyDict::new(py);
         out.set_item("status_code", status)?;
+        
+        // Use PyBytes::new(py, ...) instead of ::new_bound()
         out.set_item("content", PyBytes::new(py, &bytes))?;
 
+        // Use PyDict::new(py) instead of ::new_bound()
         let hdict = PyDict::new(py);
         for (k, v) in hdrs.iter() {
             hdict.set_item(k.as_str(), v.to_str().unwrap_or(""))?;
         }
         out.set_item("headers", hdict)?;
 
-        Ok(out.into())
+        Ok(out)
     }
 
     #[pyo3(signature = (url, headers=None))]
-    pub fn get(
+    pub fn get<'py>(
         &self,
-        py: Python,
+        py: Python<'py>,
         url: String,
-        headers: Option<&PyDict>,
-    ) -> PyResult<Py<PyDict>> {
+        headers: Option<Bound<'py, PyDict>>,
+    ) -> PyResult<Bound<'py, PyDict>> { // Returns a PyDict
         self.request(py, "GET".into(), url, headers, None)
     }
 
     #[pyo3(signature = (url, headers=None, body=None))]
-    pub fn post(
+    pub fn post<'py>(
         &self,
-        py: Python,
+        py: Python<'py>,
         url: String,
-        headers: Option<&PyDict>,
+        headers: Option<Bound<'py, PyDict>>,
         body: Option<String>,
-    ) -> PyResult<Py<PyDict>> {
+    ) -> PyResult<Bound<'py, PyDict>> { // Returns a PyDict
         self.request(py, "POST".into(), url, headers, body)
     }
 }
