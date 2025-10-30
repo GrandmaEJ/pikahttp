@@ -51,6 +51,26 @@ maturin develop
 
 ## 🚀 Quick Start
 
+### Requests-like API (Recommended)
+
+```python
+import pikahttp as pika
+
+# GET request
+response = pika.get("https://api.github.com/zen")
+print(f"Status code: {response.status_code}")
+print(f"Content: {response.text}")
+
+# POST request with JSON
+data = {"hello": "world"}
+response = pika.post("https://httpbin.org/post", json=data)
+print(f"Status code: {response.status_code}")
+print(f"Response: {response.json()}")
+
+# Access response as dictionary
+print(f"Headers: {response['headers']}")
+```
+
 ### Using Session
 
 ```python
