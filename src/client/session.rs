@@ -31,10 +31,15 @@ impl PySession {
             .parse::<Method>()
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
 
-        let headers_map: HashMap<String, String> = match headers {
+        let mut headers_map: HashMap<String, String> = match headers {
             Some(h) => h.extract()?,
             None => HashMap::new(),
         };
+
+        // Add default User-Agent if not provided
+        if !headers_map.contains_key("User-Agent") {
+            headers_map.insert("User-Agent".to_string(), "pikahttp/0.1.0".to_string());
+        }
 
         let body_bytes = body.unwrap_or_default();
 
