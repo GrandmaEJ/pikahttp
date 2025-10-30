@@ -7,7 +7,14 @@
 
 > A blazingly fast HTTP client for Python, powered by Rust and Hyper.
 
-`pikahttp` combines Python’s ease of use with Rust’s performance, providing a simple yet powerful HTTP client that’s up to 18% faster than traditional Python HTTP libraries.
+`pikahttp` combines Python's ease of use with Rust's performance, providing a simple yet powerful HTTP client that's up to 18% faster than traditional Python HTTP libraries.
+
+---
+
+## 📖 Documentation Languages
+
+- **[MORE DETAILED ENGLISH README](README.en.md)** - Comprehensive English documentation
+- **[Bengali README](README.bn.md)** - Complete Bengali (Bangla) documentation
 
 ---
 
@@ -77,30 +84,26 @@ print(f"Status code: {response['status_code']}")
 print(f"Response: {response['content']}")
 ```
 
-### Using Async Convenience Functions
+### Using Convenience Functions
 
 ```python
-import asyncio
-import pikahttp
+from pikahttp import Session
 
-async def main():
-    response = await pikahttp.get(
-        "https://api.github.com/events",
-        headers={"User-Agent": "pikahttp/0.1.0"}
-    )
-    print(response.status_code)
-    print(response.headers)
-    print(response.json())
+# Create a session
+session = Session()
 
-    response = await pikahttp.post(
-        "https://httpbin.org/post",
-        json={"key": "value"},
-        headers={"User-Agent": "pikahttp/0.1.0"}
-    )
-    print(response.text)
+# GET request
+response = session.get("https://api.github.com/zen")
+print(f"Status: {response['status_code']}")
+print(f"Headers: {response['headers']}")
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# POST request
+response = session.post(
+    "https://httpbin.org/post",
+    headers={"Content-Type": "application/json"},
+    body='{"key": "value"}'
+)
+print(f"Response: {response['content']}")
 ```
 
 ---
@@ -153,12 +156,13 @@ python benchmark.py
 
 ## 📖 Documentation
 
+* [English Documentation](README.en.md) - Comprehensive guide in English
+* [Bengali Documentation](README.bn.md) - Complete guide in Bengali/Bangla
 * [Examples](examples/)
-* [API Reference](README.md#api-reference)
+* [API Reference](README.en.md#api-reference)
 
 ---
 
 ## 📝 License
 
 MIT License. See [LICENSE](LICENSE) for details.
-
