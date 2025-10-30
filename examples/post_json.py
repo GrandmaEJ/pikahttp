@@ -1,27 +1,16 @@
-from pikahttp import Session
-import json
+import pikahttp as pika
 
 
 def main():
-    # Create a session
-    session = Session()
-
-    # Set headers and data
-    headers = {"User-Agent": "pikahttp/0.1.0", "Content-Type": "application/json"}
-
+    # Set data
     data = {"title": "Test Post", "body": "This is a test post using pikahttp"}
 
-    # Make POST request
-    response = session.request(
-        "POST",
-        "https://jsonplaceholder.typicode.com/posts",
-        headers=headers,
-        body=json.dumps(data),
-    )
+    # Make POST request using requests-like API
+    response = pika.post("https://jsonplaceholder.typicode.com/posts", json=data)
 
     # Print response
-    print(f"Status code: {response['status_code']}")
-    print(f"Response data: {json.loads(response['content'])}")
+    print(f"Status code: {response.status_code}")
+    print(f"Response data: {response.json()}")
 
 
 if __name__ == "__main__":
