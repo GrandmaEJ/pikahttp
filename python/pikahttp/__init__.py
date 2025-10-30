@@ -5,7 +5,7 @@ class Response(dict):
     def __init__(self, response_dict):
         super().__init__(response_dict)
         for key, value in response_dict.items():
-            if key != 'content':
+            if key != "content":
                 setattr(self, key, value)
         self._content = response_dict["content"]
 
@@ -15,6 +15,7 @@ class Response(dict):
 
     def json(self):
         import json
+
         return json.loads(self.text)
 
     @property
@@ -45,6 +46,7 @@ def get(url, **kwargs):
 
 def post(url, **kwargs):
     import json
+
     body = None
     if "json" in kwargs:
         body = json.dumps(kwargs["json"])
