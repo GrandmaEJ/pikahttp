@@ -1,16 +1,10 @@
-import asyncio
 import time
+import sys
 import urllib.request
 import statistics
 from typing import List, Callable
 import requests
 import pikahttp
-
-import statistics
-from typing import List, Callable
-import requests
-import pikahttp
-import sys
 
 from tests.mock_server import MockServer
 
@@ -18,9 +12,10 @@ server = MockServer()
 TEST_URL = f"{server.start()}/get"
 NUM_REQUESTS = 100
 
+
 def print_progress(current: int, total: int, label: str = "") -> None:
     """Print a progress bar.
-    
+
     Args:
         current (int): Current progress value
         total (int): Total value for 100% progress
@@ -36,11 +31,13 @@ def print_progress(current: int, total: int, label: str = "") -> None:
     if current == total:
         print()
 
+
 def measure_time(func: Callable) -> float:
     start_time = time.time()
     func()
     end_time = time.time()
     return end_time - start_time
+
 
 async def measure_time_async(func: Callable) -> float:
     start_time = time.time()
@@ -48,16 +45,22 @@ async def measure_time_async(func: Callable) -> float:
     end_time = time.time()
     return end_time - start_time
 
+
 def benchmark_urllib():
     urllib.request.urlopen(TEST_URL).read()
+
 
 def benchmark_requests():
     requests.get(TEST_URL)
 
+
 def benchmark_pikahttp():
     session = pikahttp.Session()
-    response = session.request("GET", TEST_URL, headers={"User-Agent": "pikahttp-benchmark/0.1.0"})
+    response = session.request(
+        "GET", TEST_URL, headers={"User-Agent": "pikahttp-benchmark/0.1.0"}
+    )
     response["content"]  # Content is already downloaded
+
 
 def run_benchmarks():
     # Warm up
@@ -68,7 +71,7 @@ def run_benchmarks():
         benchmark_pikahttp()
 
     print(f"\nRunning benchmarks ({NUM_REQUESTS} requests each)...")
-    
+
     # urllib benchmarks
     urllib_times: List[float] = []
     print("\nBenchmarking urllib...")
@@ -76,7 +79,7 @@ def run_benchmarks():
         time_taken = measure_time(benchmark_urllib)
         urllib_times.append(time_taken)
         print_progress(i + 1, NUM_REQUESTS, "urllib")
-    
+
     # requests benchmarks
     requests_times: List[float] = []
     print("\nBenchmarking requests...")
@@ -84,7 +87,7 @@ def run_benchmarks():
         time_taken = measure_time(benchmark_requests)
         requests_times.append(time_taken)
         print_progress(i + 1, NUM_REQUESTS, "requests")
-    
+
     # pikahttp benchmarks
     pikahttp_times: List[float] = []
     print("\nBenchmarking pikahttp...")
@@ -100,7 +103,7 @@ def run_benchmarks():
             statistics.median(times),
             min(times),
             max(times),
-            statistics.stdev(times)
+            statistics.stdev(times),
         )
 
     urllib_stats = calc_stats(urllib_times)
@@ -110,11 +113,19 @@ def run_benchmarks():
     # Print results
     print("\nResults:")
     print("-" * 80)
-    print(f"{'Library':<15} {'Mean (s)':<12} {'Median (s)':<12} {'Min (s)':<12} {'Max (s)':<12} {'StdDev (s)':<12}")
+    print(
+        f"{'Library':<15} {'Mean (s)':<12} {'Median (s)':<12} {'Min (s)':<12} {'Max (s)':<12} {'StdDev (s)':<12}"
+    )
     print("-" * 80)
-    print(f"urllib         {urllib_stats[0]:<12.4f} {urllib_stats[1]:<12.4f} {urllib_stats[2]:<12.4f} {urllib_stats[3]:<12.4f} {urllib_stats[4]:<12.4f}")
-    print(f"requests       {requests_stats[0]:<12.4f} {requests_stats[1]:<12.4f} {requests_stats[2]:<12.4f} {requests_stats[3]:<12.4f} {requests_stats[4]:<12.4f}")
-    print(f"pikahttp      {pikahttp_stats[0]:<12.4f} {pikahttp_stats[1]:<12.4f} {pikahttp_stats[2]:<12.4f} {pikahttp_stats[3]:<12.4f} {pikahttp_stats[4]:<12.4f}")
+    print(
+        f"urllib         {urllib_stats[0]:<12.4f} {urllib_stats[1]:<12.4f} {urllib_stats[2]:<12.4f} {urllib_stats[3]:<12.4f} {urllib_stats[4]:<12.4f}"
+    )
+    print(
+        f"requests       {requests_stats[0]:<12.4f} {requests_stats[1]:<12.4f} {requests_stats[2]:<12.4f} {requests_stats[3]:<12.4f} {requests_stats[4]:<12.4f}"
+    )
+    print(
+        f"pikahttp      {pikahttp_stats[0]:<12.4f} {pikahttp_stats[1]:<12.4f} {pikahttp_stats[2]:<12.4f} {pikahttp_stats[3]:<12.4f} {pikahttp_stats[4]:<12.4f}"
+    )
     print("-" * 80)
 
     # Calculate and print speed improvements
@@ -125,6 +136,7 @@ def run_benchmarks():
     print("\nSpeed Improvements:")
     print(f"pikahttp is {urllib_speedup:.1f}% faster than urllib")
     print(f"pikahttp is {requests_speedup:.1f}% faster than requests")
+
 
 if __name__ == "__main__":
     try:

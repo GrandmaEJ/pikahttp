@@ -25,7 +25,8 @@ impl PySession {
         url: String,
         headers: Option<Bound<'py, PyDict>>,
         body: Option<String>,
-    ) -> PyResult<Bound<'py, PyDict>> { // Returns a Bound<PyDict>, not awaitable
+    ) -> PyResult<Bound<'py, PyDict>> {
+        // Returns a Bound<PyDict>, not awaitable
         let method = method
             .parse::<Method>()
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
@@ -57,7 +58,10 @@ impl PySession {
 
             let status = resp.status().as_u16();
             let hdrs = resp.headers().clone();
-            let bytes = resp.into_body().collect().await
+            let bytes = resp
+                .into_body()
+                .collect()
+                .await
                 .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?
                 .to_bytes();
 
@@ -68,11 +72,11 @@ impl PySession {
         let (status, hdrs, bytes): (u16, _, Bytes) = RUNTIME.block_on(fut)?;
 
         // --- FIXES for pyo3 0.27 ---
-        
+
         // Use PyDict::new(py) instead of ::new_bound()
         let out = PyDict::new(py);
         out.set_item("status_code", status)?;
-        
+
         // Use PyBytes::new(py, ...) instead of ::new_bound()
         out.set_item("content", PyBytes::new(py, &bytes))?;
 
@@ -92,7 +96,8 @@ impl PySession {
         py: Python<'py>,
         url: String,
         headers: Option<Bound<'py, PyDict>>,
-    ) -> PyResult<Bound<'py, PyDict>> { // Returns a PyDict
+    ) -> PyResult<Bound<'py, PyDict>> {
+        // Returns a PyDict
         self.request(py, "GET".into(), url, headers, None)
     }
 
@@ -103,7 +108,8 @@ impl PySession {
         url: String,
         headers: Option<Bound<'py, PyDict>>,
         body: Option<String>,
-    ) -> PyResult<Bound<'py, PyDict>> { // Returns a PyDict
+    ) -> PyResult<Bound<'py, PyDict>> {
+        // Returns a PyDict
         self.request(py, "POST".into(), url, headers, body)
     }
 }
